@@ -129,8 +129,11 @@ def main(argv):
                     formatter_class=formatter)
     arguments = [
         # c1, c2, action, dest, default, help
+        ('-e', '--echo', 'store_true', 'ECHO', False,
+         'echo premise(s) and goal',),
         ('-v', '--verbose', 'store_true', 'VERBOSE', False,
-         'echo status information', ),
+         'echo entire truth table',),
+
     ]
     # Add optional arguments with values.
     for c1, c2, a, v, d, h in arguments:
@@ -140,11 +143,13 @@ def main(argv):
     parser.add_argument('GOAL', help='goal to match to premise(s)')
     # Parse arguments.
     pa = parser.parse_args(args=argv[1: ])
-    if pa.VERBOSE:
+    if pa.ECHO:
         if pa.PREMISE:
-            print(f"PREMISES = {pa.PREMISE}")
+            space, sq = '\n' + 11 * ' ', "'"
+            print(f"PREMISES = " \
+                  f"{f'{space}'.join([f'{sq}{p}{sq}' for p in pa.PREMISE])}")
         if pa.GOAL:
-            print(f"    GOAL = {pa.GOAL}")
+            print(f"    GOAL = '{pa.GOAL}'")
     # Create the truth table.
     # TODO: this simply prints the table
     table = Table('\n'.join(pa.PREMISE), pa.GOAL, pa.VERBOSE)
@@ -166,7 +171,7 @@ if __name__ == '__main__':
               "a b &       # (a&b)",
               "p q a ~ & =># p=>(q&~a)",
               "p ~         # ~p", ])
-        main(["logicproof.py",
+        main(["logicproof.py", "-e",
               "r s w & =>      # r => ( s & w )",
               "w r <=>         # w <=> r",
               "r ~ ~           # ~~r",
