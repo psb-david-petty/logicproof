@@ -1,7 +1,13 @@
 # logicproof
 
-This script evaluates logical premises ...
+This script creates a truth-table proof and evaluates logical premises then compares them to an evaluated goal when the conjunction of all premises is `True`.
 
+| Link | Description |
+| -- | -- |
+| [http://intrologic.stanford.edu/](http://intrologic.stanford.edu/) | Based on the *Stanford Introduction to Logic* course. |
+| [http://logica.stanford.edu/logica/homepage/boole.php](http://logica.stanford.edu/logica/homepage/boole.php) | Similar to the [Logica](http://logica.stanford.edu/) Boole tool. |
+
+The test proofs are based on activities from [Chapter 4](https://docs.google.com/presentation/d/e/2PACX-1vTg06S2eC-4g-GdnkG7_IzAX-ByUSugc_RlwGVb7FaEFgpVHH8L7rJkPGIZ_LqRmm0r2rqNMciuH3jX/pub).
 ## Usage
 
 ```
