@@ -16,90 +16,160 @@ __maintainer__ = "David C. Petty"
 __email__ = "david_petty@psbma.org"
 __status__ = "Hack"
 
-import argparse, os, sys
+import argparse, os, re, sys
 
 
 class Table:
-    sep = ' \u25a1 '
+    """Generate and print truth table for premises and goal."""
+    _sep = '*'                              # separator
+    _top = (0, lambda: 1)                   # true
+    _nop = (1, lambda o: ~o & 1)            # not
+    _aop = (2, lambda a, b: a & b)          # and
+    _oop = (2, lambda a, b: a | b)          # or
+    _iop = (2, lambda a, b: (~a | b) & 1)   # inference
+    _bop = (2, lambda a, b: ~(a ^ b) & 1)   # biconditional
+    # _ops is the dictionary of valid operation tuples.
+    _ops = \
+        {'T': _top,
+         '~': _nop,
+         '&': _aop, '|': _oop, '=>': _iop, '<=>': _bop, 'AND': _aop}
 
     def __init__(self, premises, goal, verbose=False):
-        """"""
-        self._premises = premises
-        self._goal = goal
+        """Generate and print truth table for premises and goal."""
+        self._premises = self.parse(premises)
+        self._goals = self.parse(goal)
+        assert len(self._goals) == 1, f"goal ({self._goals}) has > 1 item"
         self._verbose = verbose
-        self.generate(self._premises, self._goal, self._verbose)
+        self._vars = set([t.lower() for exp in self._premises + self._goals
+                          for t in exp.split(' ')
+                          if t.lower() in 'abcdefghijklmnopqrstuvwxyz'])
+        self._table = self._generate()
 
-    def echo(self, exp, val, end=' '):
-        """Print exp and val."""
-        print(f"{exp}:[{val}]", end=end)
+    @property
+    def premises(self):
+        """Return self._premises property."""
+        return self._premises
 
-    def format_values(self, values):
-        return ''.join([ f"{k}:[{values[k]}]" for k in sorted(values) ])
+    @property
+    def goals(self):
+        """Return self._goals property."""
+        return self._goals
 
-    def parse(self, lines):
+    @property
+    def table(self):
+        """Return self._table property."""
+        return '\n'.join(self._table)
+
+    @property
+    def vars(self):
+        """Return self._vars property."""
+        return self._vars
+
+    @property
+    def verbose(self):
+        """Return self._verbose property."""
+        return self._verbose
+
+    @staticmethod
+    def parse(lines):
         """Return list of lines stripped of comments."""
         return [
             (s[: s.find('#')] if s.find('#') >= 0 else s).strip()
             for s in lines.split('\n') if s
         ]
 
-    def values(self, n, var):
-        """Return value dict for reversed sorted var list."""
-        assert 0 <= n < 2 ** len(var), f"{n} >= 2 ** len({var})"
+    @staticmethod
+    def values(n, var):
+        """Return value dict for reversed sorted var list.
+        For example 3 might yield {'a': 0, 'b': 1, 'c': '1'}"""
+        assert 0 <= n < 2 ** len(var), f"{n} not on [0, 2 ** len({var}))"
         result = dict()
         for i, v in enumerate(reversed(sorted(var))):
             result[v] = (1 << i & n) >> i
         return result
 
-    def evaluate(self, exp, values, verbose=True, echo_values=True):
-        """Evaluate exp in the context of values."""
-        if echo_values and verbose:
-            print(self.format_values(values), end=self.sep)
-        nop = (1, lambda o: ~o & 1)
-        aop = (2, lambda a, b: a & b)
-        oop = (2, lambda a, b: a | b)
-        iop = (2, lambda a, b: (~a | b) & 1)
-        bop = (2, lambda a, b: ~(a ^ b) & 1)
-        ops = {'~': nop, '&': aop, '|': oop, '=>': iop, '<=>': bop, 'AND': aop}
-        stack = list()
+    """ ############### Create properties ############## """
+
+    def _evaluate_premises(self, n):
+        """Return ..."""
+        return self._evaluate(
+            ' '.join(self.premises + ['AND'] * (len(self.premises) - 1)),
+            self.values(n, self.vars))
+
+    def _evaluate_goal(self, n):
+        """Return ..."""
+        return self._evaluate(self.goals[0], self.values(n, self.vars))
+
+    def _markdown_encode(self, s):
+        """Encode logic expressions and markdown table."""
+        an, aa, ao, ai, ab = '~', '&', '|', '=>', '<=>'
+        un, ua, uo, ui, ub = '&not;', '&and;', '&or;', '&rArr;', '&hArr;'
+        un, ua, uo, ui, ub = '\u00AC', '\u2227', '\u2228', '\u21D2', '\u21D4'
+        # ab must be replaced before ai and self._sep must be replaced last.
+        return s.replace(an, un)\
+            .replace(aa, ua) \
+            .replace(ao, uo) \
+            .replace(ab, ub) \
+            .replace(ai, ui) \
+            .replace(self._sep, ' | ') \
+            .replace('+', '**').strip() # then format '+' for bold
+
+    def _header(self):
+        """Create header for table."""
+        dvb, nl, sep, wsq = '\u2016', '\n', self._sep, '\u25a1'
+        vnames = f"{''.join(sorted(self.vars))}"
+        pexp, pval = zip(*self._evaluate_premises(0))
+        gexp, gval = zip(*self._evaluate_goal(0))
+        header = self._markdown_encode(
+            f"{sep}{vnames}{sep}{dvb}{sep}{sep.join(pexp)}{sep}" \
+            f"{wsq}{sep}{sep.join(gexp)}{sep}")
+        return header + '\n' \
+            + f"{'| :---: ' * (len([c for c in header if c == '|']) - 1)}|"
+
+    def _line(self, n):
+        """Format table line."""
+        dvb, sep, wsq = '\u2016', self._sep, '\u25a1'
+        values, b = self.values(n, self.vars), lambda n: 'T' if n else 'F'
+        pexp, pval = zip(*self._evaluate_premises(n))
+        gexp, gval = zip(*self._evaluate_goal(n))
+        number = \
+            f"+{''.join(b(v) for v in values.values())[::-1]}+"
+        line = self._markdown_encode(
+            f"{sep}{number}{sep}{dvb}{sep}{sep.join(b(v) for v in pval)}{sep}" \
+            f"{wsq}{sep}{sep.join(b(v) for v in gval)}{sep}")
+        if pval[-1]:
+            return line.replace(wsq, '\u25a0')
+        elif self.verbose:
+            return line
+
+    def _evaluate(self, exp, values):
+        """Return (full_expression, evaluated_value, ) tuple that is result
+        of evaluating exp in the context of values."""
+        stack, calcs, sregex = list(), list(), re.compile(r'\s*')
+        if exp in 'abcdefghijklmnopqrstuvwxyz':
+            return [(exp, values[exp], )]
         for t in exp.split(' '):
             if t in 'abcdefghijklmnopqrstuvwxyz':
+                # If t is a variable, push variable and value.
                 stack.append((t, values[t],))
-            elif t in ops:
-                num, op = ops[t]        #
+            elif t in self._ops:
+                # If t is an op, evaluate push expression, push it and value.
+                num, op = self._ops[t]  #
                 pops = stack[-num: ]    #
                 del stack[-num: ]       #
                 exps, vals = list(pop[0] for pop in pops), list(pop[1] for pop in pops)
-                stack.append((' '.join(list(exps) + [t]), op(*vals), ))
-                if verbose:
-                    self.echo(*stack[-1])
+                exp, val = ' '.join(exps + [t]), op(*vals)
+                stack.append((exp, val, ))
+                calcs.append((exp, val,))
             else:
                 print(f"unknown token: {t}")
         assert len(stack) == 1, f"unbalanced stack ({stack})"
-        return stack.pop()
+        return calcs
 
-    def generate(self, premises, goal, verbose):
-        p, g = self.parse(premises), self.parse(goal)
-        assert len(g) == 1, f"goal ({g}) must only have one item"
-
-        # Create token var list.
-        var = set([t for exp in p + g for t in exp.split(' ')
-                   if t in 'abcdefghijklmnopqrstuvwxyz'])
-
+    def _generate(self):
         # Evaluate all dicts.
-        for n in range(2 ** len(var)):
-            for exp in p:
-                self.evaluate(exp, self.values(n, var), verbose)
-                if verbose: print()
-            exp, val = self.evaluate(' '.join(p + ['AND'] * (len(p) - 1)), self.values(n, var), verbose)
-            # If val and gval, then the premises entail the conclusion.
-            if val:
-                if verbose: print()
-                print(self.format_values(self.values(n, var)), end=' \u25a0 ')
-                self.echo(exp, val); print('\u22ab', end=' ')
-                gexp, gval = self.evaluate(g[0], self.values(n, var), False, False)
-                self.echo(gexp, gval); print()
-            elif verbose: print()
+        lines = [self._line(n) for n in range(2 ** len(self.vars))]
+        return [self._header()] + [line for line in lines if line]
 
 
 class Parser(argparse.ArgumentParser):
@@ -139,10 +209,12 @@ def main(argv):
     for c1, c2, a, v, d, h in arguments:
         parser.add_argument(c1, c2, action=a, dest=v, default=d, help=h)
     # Add positional arguments. 'NAME' is both the string and the variable.
-    parser.add_argument('PREMISE', nargs='+', help='one or more premises')
+    parser.add_argument('PREMISE', nargs='*', help='zero or more premises')
     parser.add_argument('GOAL', help='goal to match to premise(s)')
     # Parse arguments.
     pa = parser.parse_args(args=argv[1: ])
+    if not pa.PREMISE:
+        pa.PREMISE = ['T']
     if pa.ECHO:
         if pa.PREMISE:
             space, sq = '\n' + 11 * ' ', "'"
@@ -151,8 +223,9 @@ def main(argv):
         if pa.GOAL:
             print(f"    GOAL = '{pa.GOAL}'")
     # Create the truth table.
-    # TODO: this simply prints the table
     table = Table('\n'.join(pa.PREMISE), pa.GOAL, pa.VERBOSE)
+    # TODO: this simply prints the table
+    print(table.table)
 
 
 if __name__ == '__main__':
@@ -163,7 +236,7 @@ if __name__ == '__main__':
     )
     if any((is_idle, is_pycharm, is_jupyter,)):
         # Activity 4.3
-        main(["logicproof.py", "-v",
+        main(["logicproof.py", "-v", "-e",
               "s r &       # (S&R)",
               "a b s ~ & =># A=>(B&~S)",
               "a ~         # ~A", ])
@@ -171,47 +244,22 @@ if __name__ == '__main__':
               "a b &       # (a&b)",
               "p q a ~ & =># p=>(q&~a)",
               "p ~         # ~p", ])
-        main(["logicproof.py", "-e",
+        main(["logicproof.py", "-ev",
               "r s w & =>      # r => ( s & w )",
               "w r <=>         # w <=> r",
               "r ~ ~           # ~~r",
               "w q =>          # w => q",
               "s q & r <=>     # ( s & q ) <=> r", ])
-        main(["logicproof.py",
+        main(["logicproof.py", "-e",
               "r m & s w & =>         # (r&m)=>(s&w)",
               "r m & a & s w & b | => #  (r&m&a)=>(s&w|b)", ])
+        main(["logicproof.py", "-e",
+              "p q p => => # p=>(q=>p)", ])
+        main(["logicproof.py", "-e",
+              "p q |  # (p|q)",
+              "p ~    # ~p",
+              "q      # q"])
         main(["logicproof.py",
               "--help", ])
     else:
         main(sys.argv)
-
-# Activity 4.3
-premises = """
-s r & # (S&R)
-a b s ~ & => # A=>(B&~S)
-"""
-goal = """
-a ~ # ~A
-"""
-premises = """
-a b & # (a&b)
-p q a ~ & => # p=>(q&~a)
-"""
-goal = """
-p ~ # ~p
-"""
-premises = """
-r s w & =>      # r => ( s & w )
-w r <=>         # w <=> r
-r ~ ~           # ~~r
-w q =>          # w => q
-"""
-goal = """
-s q & r <=>     # ( s & q ) <=> r
-"""
-premises = """
-r m & s w & => # (r&m)=>(s&w)
-"""
-goal = """
-r m & a & s w & b | => #  (r&m&a)=>(s&w|b)
-"""

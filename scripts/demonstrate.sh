@@ -5,7 +5,7 @@
 # https://onedrive.live.com/?authkey=%21AL2JfVYrc8l6-NE&cid=477D5CE9111F9830&id=477D5CE9111F9830%2156368&parId=477D5CE9111F9830%2155559
 
 DIR="$( dirname $0 )"
-/usr/bin/env python3 ${DIR}../src/logicproof.py "-v" \
+/usr/bin/env python3 ${DIR}/../src/logicproof.py "-v" \
 	"s r &       # (S&R)" \
 	"a b s ~ & =># A=>(B&~S)" \
 	"a ~         # ~A"
@@ -30,15 +30,14 @@ DIR="$( dirname $0 )"
 # https://onedrive.live.com/?authkey=%21ALcQGP2kXq6u8uw&cid=477D5CE9111F9830&id=477D5CE9111F9830%2156552
 
 /usr/bin/env python3 ${DIR}/../src/logicproof.py '-e' \
-    " # p=>q" \
-    " #   m=> (p|q)" \
-    " # m=>q"
+    "p q =>         # p=>q" \
+    "p q |          # m=> (p|q)" \
+    "m q =>         # m=>q"
 /usr/bin/env python3 ${DIR}/../src/logicproof.py '-e' \
-    " # (p=>(q=>r)" \
-    " # (p=>q) => (p=>r)"
+    "p q r => =>    # (p=>(q=>r)" \
+    "p q => p r => =># (p=>q) => (p=>r)"
 /usr/bin/env python3 ${DIR}/../src/logicproof.py '-e' \
-    " # " \
-    " p q p => => # p=>(q=>p)"
+    "p q p => =>    # p=>(q=>p)"
 /usr/bin/env python3 ${DIR}/../src/logicproof.py '-e' \
     "p q =>         # p=>q" \
     "s r <=>        # s<=>r" \
@@ -46,7 +45,7 @@ DIR="$( dirname $0 )"
     "m s =>         # m=>s" \
     "p r | m |      #  p|r|m" \
     "q m r s & <=> |# (q | (m<=>(r&s)))"
-/usr/bin/env python3 ${DIR}/../src/logicproof.py '-e' \
+/usr/bin/env python3 ${DIR}/../src/logicproof.py '-ev' \
     "r s q p & | |  # (r|s|(q&p))" \
     "m r <=>        # m<=>r" \
     "q s <=>        # q<=>s" \
