@@ -256,31 +256,129 @@ if __name__ == '__main__':
         '__file__' not in globals()
     )
     if any((is_idle, is_pycharm, is_jupyter,)):
-        # Activity 4.3
-        main(["logicproof.py", "-v", "-e",
-              "s r &       # (S&R)",
-              "a b s ~ & =># A=>(B&~S)",
-              "a ~         # ~A", ])
-        main(["logicproof.py",
-              "a b &       # (a&b)",
-              "p q a ~ & =># p=>(q&~a)",
-              "p ~         # ~p", ])
-        main(["logicproof.py", "-ev",
-              "r s w & =>      # r => ( s & w )",
-              "w r <=>         # w <=> r",
-              "r ~ ~           # ~~r",
-              "w q =>          # w => q",
-              "s q & r <=>     # ( s & q ) <=> r", ])
-        main(["logicproof.py", "-e",
-              "r m & s w & =>         # (r&m)=>(s&w)",
-              "r m & a & s w & b | => #  (r&m&a)=>(s&w|b)", ])
-        main(["logicproof.py", "-e",
-              "p q p => => # p=>(q=>p)", ])
-        main(["logicproof.py", "-e",
-              "p q |  # (p|q)",
-              "p ~    # ~p",
-              "q      # q"])
-        main(["logicproof.py",
-              "--help", ])
+        activities = [
+            # Activity 4.1 from the virtual classroom:
+            # https://onedrive.live.com/?authkey=%21AKEIaMjOI4GZ8gU&cid=477D5CE9111F9830&id=477D5CE9111F9830%2156158&parId=477D5CE9111F9830%2155559
+            ["logicproof.py", "-e",
+             "w q r & => # w => (q&r)",
+             "u w p & => # u => (w&p)",
+             "s u & # s&u",
+             "q a | # q|a",
+             ],
+            ["logicproof.py", "-e",
+             "p # p",
+             "p q r & => # p =>(q&r)",
+             "s r <=> # s<=>r",
+             "s # s",
+             ],
+            ["logicproof.py", "-e",
+             "q p & # (q&p)",
+             "q s | w => # (q|s) =>w",
+             "r w v | <=> # r <=> (w|v)",
+             "r # r",
+             ],
+            # Activity 4.2 from the virtual classroom:
+            # https://onedrive.live.com/?authkey=%21AJj2NI3eziQneuA&cid=477D5CE9111F9830&id=477D5CE9111F9830%2156159&parId=477D5CE9111F9830%2155559
+            ["logicproof.py", "-e",
+             "a b & p <=> # (a&b) <=> p",
+             "b s <=> # b <=> s",
+             "p s => # p => s",
+             ],
+            ["logicproof.py", "-e",
+             "w p q & => # w => (p&q)",
+             "s q r | <=> # s <=> (q|r)",
+             "w s => # w => s",
+             ],
+            ["logicproof.py", "-e",
+             "r p q & => # r =>(p&q)",
+             "s p w | <=> # s <=> (p|w)",
+             "r s => # r => s",
+             ],
+            ["logicproof.py", "-e",
+             "r ~ s <=> # ~r<=>s",
+             "q r ~ <=> # q<=>~r",
+             "q s ~ => # q => ~s",
+             "r # r",
+             ],
+            ["logicproof.py", "-e",
+             "p # p",
+             "r q => # r=>q",
+             "w s <=> # w<=>s",
+             "r s | # r|s",
+             "w q => # w=>q",
+             "p q & # p&q",
+             ],
+            # Activity 4.3 from the virtual classroom:
+            # https://onedrive.live.com/?authkey=%21AL2JfVYrc8l6-NE&cid=477D5CE9111F9830&id=477D5CE9111F9830%2156368&parId=477D5CE9111F9830%2155559
+            ["logicproof.py", "-e",
+             "s r &       # (S&R)",
+             "a b s ~ & =># A=>(B&~S)",
+             "a ~         # ~A",
+             ],
+            ["logicproof.py", "-e",
+             "a b &       # (a&b)",
+             "p q a ~ & =># p=>(q&~a)",
+             "p ~         # ~p",
+             ],
+            ["logicproof.py", "-e",
+             "r s w & =>      # r => ( s & w )",
+             "w r <=>         # w <=> r",
+             "r ~ ~           # ~~r",
+             "w q =>          # w => q",
+             "s q & r <=>     # ( s & q ) <=> r",
+             ],
+            ["logicproof.py", "-e",
+             "r m & s w & =>         # (r&m)=>(s&w)",
+             "r m & a & s w & b | => #  (r&m&a)=>(s&w|b)",
+             ],
+            # Activity 4.4 from the virtual classroom:
+            # https://onedrive.live.com/?authkey=%21ALcQGP2kXq6u8uw&cid=477D5CE9111F9830&id=477D5CE9111F9830%2156552
+            ["logicproof.py", "-e",
+             "p q =>         # p=>q",
+             "p q |          # m=> (p|q)",
+             "m q =>         # m=>q",
+             ],
+            ["logicproof.py", "-e",
+             "p q r => =>    # (p=>(q=>r)",
+             "p q => p r => =># (p=>q) => (p=>r)",
+             ],
+            ["logicproof.py", "-e",
+             "p q p => =>    # p=>(q=>p)",
+             ],
+            ["logicproof.py", "-e",
+             "p q =>         # p=>q",
+             "s r <=>        # s<=>r",
+             "s q =>         # s=>q",
+             "m s =>         # m=>s",
+             "p r | m |      #  p|r|m",
+             "q m r s & <=> |# (q | (m<=>(r&s)))",
+             ],
+            ["logicproof.py", "-e",
+             "r s q p & | |  # (r|s|(q&p))",
+             "m r <=>        # m<=>r",
+             "q s <=>        # q<=>s",
+             "q m =>         # q=>m",
+             "m              # m",
+             ],
+            ["logicproof.py", "-e",
+             "p q |  # (p|q)",
+             "p ~    # ~p",
+             "q      # q",
+             ],
+            ["logicproof.py", "-e",
+             "p q => # p=>q",
+             "p ~ q |# (~p|q)",
+             ],
+        ]
+
+        # Print truth tables for all activities.
+        print("# Print truth tables for all activities.")
+        for activity in activities:
+            main(activity)
+
+        # Print truth tables for all activities with '--verbose' flag.
+        print("# Print truth tables for all activities with '--verbose' flag.")
+        for activity in activities:
+            main(activity + ['-v'])
     else:
         main(sys.argv)
